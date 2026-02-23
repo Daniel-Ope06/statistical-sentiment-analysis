@@ -113,12 +113,12 @@ def main():
     print("----------------------------------\n")
 
     # Task 4: ERROR ANALYSIS
-    print("\n--- Error Analysis (Log Reg BoW, C=10.0) ---")
+    print(f"\n--- Error Analysis (Log Reg TF-IDF, C={C_VALUE}) ---")
 
     # Retrieve 10 examples where the model's prediction failed
     misclassified_df = get_misclassified_examples(
         y_true=y_test,
-        y_pred=lr_bow_preds,
+        y_pred=lr_tfidf_preds,
         raw_texts=df_test['text'],
         label_encoder=le,
         num_examples=10
