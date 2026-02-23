@@ -1,6 +1,4 @@
 pandas
 numpy
 scikit-learn
-nltk
 spacy
-jupyter
