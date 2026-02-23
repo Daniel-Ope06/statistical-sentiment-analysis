@@ -3,9 +3,12 @@ from sklearn.preprocessing import LabelEncoder  # type: ignore
 
 from src.preprocessing import preprocess_sentiment
 from src.feature_extraction import (
-    extract_bow_features, extract_tfidf_features)
+    extract_bow_features,
+    extract_tfidf_features)
 from src.classifiers import (
-    train_naive_bayes, train_logistic_regression)
+    train_naive_bayes,
+    train_logistic_regression,
+    get_misclassified_examples)
 
 
 def main():
@@ -15,9 +18,8 @@ def main():
     and model evaluation.
     """
     # Task 0: DATA LOADING
-    # TODO: Remove nrows=500 before final training and submission.
-    df_train = pd.read_csv('data/train.csv', encoding='latin-1', nrows=500)
-    df_test = pd.read_csv('data/test.csv', encoding='latin-1', nrows=500)
+    df_train = pd.read_csv('data/train.csv', encoding='latin-1')
+    df_test = pd.read_csv('data/test.csv', encoding='latin-1')
 
     # Isolate columns and drop nulls
     df_train = df_train[['text', 'sentiment']].dropna(subset=['text'])
@@ -28,7 +30,9 @@ def main():
     df_test['text'] = df_test['text'].astype(str)
 
     print("\n--- Raw Data Sample ---")
+    pd.set_option('display.max_colwidth', None)  # prevent truncating text
     print(df_train.head())
+    print("----------------------------------\n")
 
     # Task 1: PREPROCESSING
     df_train['clean_text'] = df_train['text'].apply(preprocess_sentiment)
@@ -36,10 +40,11 @@ def main():
 
     print("\n--- Processed Data Sample ---")
     print(df_train[['sentiment', 'text', 'clean_text']].head())
+    print("----------------------------------\n")
 
     # Task 2: FEATURE EXTRACTION
     print("\n--- Feature Extraction Summary ---")
-    VOCAB_LIMIT = 5000
+    VOCAB_LIMIT = 10000
 
     # Extract Bag-of-Words
     X_train_bow, X_test_bow, bow_vec = extract_bow_features(
@@ -105,6 +110,22 @@ def main():
     # Create and display the DataFrame
     results_df = pd.DataFrame(results_data)
     print(results_df.to_string(index=False))
+    print("----------------------------------\n")
+
+    # Task 4: ERROR ANALYSIS
+    print("\n--- Error Analysis (Log Reg BoW, C=10.0) ---")
+
+    # Retrieve 10 examples where the model's prediction failed
+    misclassified_df = get_misclassified_examples(
+        y_true=y_test,
+        y_pred=lr_bow_preds,
+        raw_texts=df_test['text'],
+        label_encoder=le,
+        num_examples=10
+    )
+
+    print(misclassified_df.to_string(index=False, justify='left'))
+    print("----------------------------------\n")
 
 
 if __name__ == "__main__":
