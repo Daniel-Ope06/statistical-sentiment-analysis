@@ -7,3 +7,6 @@ data/
 
 # Python cache and compiled files
 __pycache__/
+
+# Workspace settings
+.vscode/
