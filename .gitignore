@@ -4,3 +4,6 @@ data/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
+# Python cache and compiled files
+__pycache__/
