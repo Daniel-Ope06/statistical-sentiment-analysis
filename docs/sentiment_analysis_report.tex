@@ -11,7 +11,7 @@
 \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm} % Standard academic margins
 \usepackage{graphicx}
 \usepackage{titlesec}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
 \usepackage{listings}
 
@@ -142,8 +142,38 @@ To address this limitation, the TF-IDF method was also evaluated. TF-IDF does no
 
 For both methods, the feature matrix was strictly limited to the top 10,000 most frequent words. This limit prevents the dataset from becoming overwhelmed by rare misspellings, reducing noise and preventing the models from overfitting. How these two representations ultimately interact with the specific learning mechanics of Naive Bayes and Logistic Regression is detailed in the following section.
 
-\section{Model Training \& Evaluation (Task 3)}
-% Discuss Hyperparameter tuning (C=10.0) and Naive Bayes vs Log Reg.
+\vspace{0.5cm}
+
+\section{Model Training \& Evaluation}
+
+\quad With the text converted into numerical features, two statistical classifiers were trained and evaluated: Multinomial Naive Bayes and Logistic Regression.
+
+\vspace{0.5cm}
+
+Naive Bayes is a probabilistic model that relies on the frequency of events. As a result, it performed significantly better when paired with the Bag-of-Words representation. Bag-of-Words provides explicit, raw integer counts of how many times a word appears, which perfectly aligns with the mathematical assumptions of Naive Bayes. When paired with TF-IDF, the fractional, scaled weights distorted these probability calculations, leading to a noticeable drop in accuracy.
+
+\vspace{0.5cm}
+
+Contrarily, Logistic Regression is a discriminative model that learns to draw a boundary between classes by assigning continuous weights to each feature. To ensure the model performed optimally on a sparse matrix of 10,000 features, its inverse regularisation strength was tuned to \texttt{C=10.0}, giving it enough mathematical flexibility to learn complex patterns without underfitting. Because Logistic Regression excels at balancing feature weights, it thrived on the TF-IDF representation. The TF-IDF scaling provided a normalised, rich feature space where highly emotional, rare words were mathematically emphasised.
+
+\newpage
+
+As demonstrated in Table \ref{tab:model_performance}, the Logistic Regression model paired with TF-IDF vectorisation emerged as the champion model. It successfully leveraged the penalised feature weights to achieve the highest scores across all core classification metrics, peaking at an overall accuracy of 0.692.
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|l|c|c|c|c|}
+        \hline
+        \textbf{Model \& Representation} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} \\ \hline
+        Naive Bayes (BoW) & 0.686 & 0.691 & 0.686 & 0.687 \\ \hline
+        Naive Bayes (TF-IDF) & 0.658 & 0.687 & 0.658 & 0.657 \\ \hline
+        Logistic Regression (BoW, C=10.0) & 0.687 & 0.691 & 0.687 & 0.688 \\ \hline
+        \textbf{Logistic Regression (TF-IDF, C=10.0)} & \textbf{0.692} & \textbf{0.697} & \textbf{0.692} & \textbf{0.694} \\ \hline
+    \end{tabular}
+    \caption{Performance metrics for all model and feature representation combinations.}
+    \label{tab:model_performance}
+\end{table}
 
 \section{Error Analysis \& Diagnostics (Task 4)}
 % Insert your Confusion Matrix and Feature Importance discussion here.
