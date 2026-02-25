@@ -40,6 +40,7 @@
     tabsize=2
 }
 \lstset{style=mystyle}
+\renewcommand{\lstlistingname}{Code Snippet}
 
 % --- Document Info ---
 \title{
@@ -60,8 +61,70 @@
 This report explores how to build a machine learning model capable of automatically classifying the sentiment of tweets as Positive, Negative, or Neutral. Before training the models, the raw text was cleaned and standardised. This included a custom "negation handling" step, which links words like "not" to the word that follows it (for example, turning "not good" into "not\_good") so the model correctly understands the true meaning of the sentence. The cleaned text was then converted into mathematical formats using two different methods: Bag-of-Words and TF-IDF. Two statistical classifiers, Naive Bayes and Logistic Regression, were trained and compared to determine which method could best identify human emotion. The results show that Logistic Regression paired with TF-IDF was the most effective approach, achieving an overall accuracy of 69.2\%.
 \end{abstract}
 
-\section{Data Preprocessing (Task 1)}
-% Explain your cleaning logic and spaCy negation handling.
+\section{Data Preprocessing}
+
+\quad Raw tweets contain significant noise and stylistic variations that can confuse machine learning algorithms. The first preprocessing step was converting all text to lowercase. While this removes the emotional intensity often conveyed through capital letters (e.g., "HATE" versus "hate"), it was a necessary trade-off for statistical models. Without lowercasing, models using Bag-of-Words or TF-IDF treat "Bad", "bad", and "BAD" as three entirely separate mathematical features. Lowercasing consolidates these variations, preventing feature fragmentation and preserving the vocabulary limit.
+
+\vspace{0.5cm}
+
+Next, regular expressions (Regex) were used to remove URLs, user mentions, and hashtags, as these rarely contribute to the underlying sentiment. However, because social media users frequently rely on punctuation to express strong feelings, multiple exclamation marks or asterisks (often used to mask profanity) were explicitly translated into readable text tokens (e.g., \texttt{exclamationmark}) before the remaining punctuation was stripped away.
+
+\noindent\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=Python, caption=Regex logic for noise removal and punctuation preservation]
+# Convert to lowercase
+text = text.lower()
+
+# Remove platform-specific noise (URLs, user mentions, hashtag symbols)
+text = re.sub(r"http\S+|www\S+|https\S+", '', text, flags=re.MULTILINE)
+text = re.sub(r'\@\w+', '', text)
+text = re.sub(r'\#', '', text)
+
+# Preserve sentiment-heavy characters by converting them to text tokens
+text = re.sub(r'\*{2,}', ' censoredswear ', text)
+text = re.sub(r'!+', ' exclamationmark ', text)
+text = re.sub(r'\?+', ' questionmark ', text)
+\end{lstlisting}
+\end{minipage}
+
+\vspace{0.5cm}
+
+Finally, the \texttt{spaCy} natural language processing library was utilised to reduce words to their base dictionary form (lemmatisation) and remove common "stop words" to reduce data sparsity. Crucially, sentiment-altering words such as "not", "no", and "never" were retained. A custom negation handler was implemented to link these negations directly to the subsequent word. For instance, the phrase "not good" was transformed into \texttt{not\_good}. This ensures the model treats the negated phrase as a distinct, negative feature rather than misinterpreting "good" as a purely positive signal
+
+\vspace{0.5cm}
+
+\noindent\begin{minipage}{\textwidth}
+\begin{lstlisting}[language=Python, caption=Custom negation handler linking modifiers to subsequent words]
+# Flag the subsequent token for negation prefixing
+if lemma in ["not", "no", "never", "cannot"]:
+    negate_next = True
+    # Append immediately to preserve if it is the final token
+    tokens.append(lemma)
+    continue
+
+# Apply negation prefix by combining with the previous negation term
+if negate_next:
+    if tokens:  # Safety check to ensure the token list is not empty
+        prev_negation = tokens.pop()
+        lemma = f"{prev_negation}_{lemma}"
+    negate_next = False
+\end{lstlisting}
+\end{minipage}
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|p{0.45\textwidth}|p{0.45\textwidth}|}
+        \hline
+        \textbf{Raw Tweet} & \textbf{Preprocessed Tweet} \\ \hline
+        Sooo SAD I will miss you here in San Diego!!! & sooo sad miss san diego exclamationmark \\ \hline
+        Sons of ****, why couldn`t they put them on the releases we already bought & son censoredswear release buy \\ \hline
+        you can ride one, you can catch one, but its not summer til you pop open one & ride catch but not\_summer til pop open \\ \hline
+    \end{tabular}
+    \caption{Examples of raw text transformed by the custom preprocessing and negation pipeline.}
+    \label{tab:preprocessing_examples}
+\end{table}
+
+\newpage
 
 \section{Feature Representation (Task 2)}
 % Discuss BoW vs TF-IDF.
