@@ -56,8 +56,9 @@
 
 \maketitle
 
-\section{Executive Summary}
-% Write your summary here.
+\begin{abstract}
+This report explores how to build a machine learning model capable of automatically classifying the sentiment of tweets as Positive, Negative, or Neutral. Before training the models, the raw text was cleaned and standardised. This included a custom "negation handling" step, which links words like "not" to the word that follows it (for example, turning "not good" into "not\_good") so the model correctly understands the true meaning of the sentence. The cleaned text was then converted into mathematical formats using two different methods: Bag-of-Words and TF-IDF. Two statistical classifiers, Naive Bayes and Logistic Regression, were trained and compared to determine which method could best identify human emotion. The results show that Logistic Regression paired with TF-IDF was the most effective approach, achieving an overall accuracy of 69.2\%.
+\end{abstract}
 
 \section{Data Preprocessing (Task 1)}
 % Explain your cleaning logic and spaCy negation handling.
