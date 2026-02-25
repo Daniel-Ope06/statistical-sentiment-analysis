@@ -126,8 +126,21 @@ if negate_next:
 
 \newpage
 
-\section{Feature Representation (Task 2)}
-% Discuss BoW vs TF-IDF.
+\section{Feature Representation}
+
+\quad Because machine learning algorithms cannot process raw text, the preprocessed tweets had to be converted into numerical formats. This project evaluated two different mathematical representations: Bag-of-Words (BoW) and Term Frequency-Inverse Document Frequency (TF-IDF).
+
+\vspace{0.5cm}
+
+The Bag-of-Words approach converts text into a simple matrix where each column represents a unique word, and the values represent how many times that word appears in a specific tweet. While this method is straightforward, it treats all words as equally important. In human language, this is rarely true; highly frequent but emotionally neutral words can mathematically overshadow rare but highly emotional words.
+
+\vspace{0.5cm}
+
+To address this limitation, the TF-IDF method was also evaluated. TF-IDF does not just count how often a word appears in a single tweet; it scales that count based on how often the word appears across the entire dataset. If a word is extremely common everywhere, its mathematical weight is penalised. If a word is rare overall but appears in a specific tweet, its weight is heavily boosted. Theoretically, TF-IDF is better suited for capturing sentiment because human emotion is often conveyed through distinct, specialised words rather than common vocabulary.
+
+\vspace{0.5cm}
+
+For both methods, the feature matrix was strictly limited to the top 10,000 most frequent words. This limit prevents the dataset from becoming overwhelmed by rare misspellings, reducing noise and preventing the models from overfitting. How these two representations ultimately interact with the specific learning mechanics of Naive Bayes and Logistic Regression is detailed in the following section.
 
 \section{Model Training \& Evaluation (Task 3)}
 % Discuss Hyperparameter tuning (C=10.0) and Naive Bayes vs Log Reg.
