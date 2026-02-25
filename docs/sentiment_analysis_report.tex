@@ -65,6 +65,8 @@
 
 Next, regular expressions (Regex) were used to remove URLs, user mentions, and hashtags, as these rarely contribute to the underlying sentiment. However, because social media users frequently rely on punctuation to express strong feelings, multiple exclamation marks or asterisks (often used to mask profanity) were explicitly translated into readable text tokens (e.g., \texttt{exclamationmark}) before the remaining punctuation was stripped away.
 
+\vspace{0.5cm}
+
 \noindent\begin{minipage}{\textwidth}
 \begin{lstlisting}[language=Python, caption=Regex logic for noise removal and punctuation preservation]
 # Convert to lowercase
@@ -82,7 +84,7 @@ text = re.sub(r'\?+', ' questionmark ', text)
 \end{lstlisting}
 \end{minipage}
 
-\vspace{0.5cm}
+\newpage
 
 Finally, the \texttt{spaCy} natural language processing library was utilised to reduce words to their base dictionary form (lemmatisation) and remove common "stop words" to reduce data sparsity. Crucially, sentiment-altering words such as "not", "no", and "never" were retained. A custom negation handler was implemented to link these negations directly to the subsequent word. For instance, the phrase "not good" was transformed into \texttt{not\_good}. This ensures the model treats the negated phrase as a distinct, negative feature rather than misinterpreting "good" as a purely positive signal
 
@@ -120,7 +122,7 @@ if negate_next:
     \label{tab:preprocessing_examples}
 \end{table}
 
-\newpage
+\vspace{0.5cm}
 
 \section{Feature Representation}
 
@@ -130,7 +132,7 @@ if negate_next:
 
 The Bag-of-Words approach converts text into a simple matrix where each column represents a unique word, and the values represent how many times that word appears in a specific tweet. While this method is straightforward, it treats all words as equally important. In human language, this is rarely true; highly frequent but emotionally neutral words can mathematically overshadow rare but highly emotional words.
 
-\vspace{0.5cm}
+\newpage
 
 To address this limitation, the TF-IDF method was also evaluated. TF-IDF does not just count how often a word appears in a single tweet; it scales that count based on how often the word appears across the entire dataset. If a word is extremely common everywhere, its mathematical weight is penalised. If a word is rare overall but appears in a specific tweet, its weight is heavily boosted. Theoretically, TF-IDF is better suited for capturing sentiment because human emotion is often conveyed through distinct, specialised words rather than common vocabulary.
 
@@ -152,7 +154,7 @@ Naive Bayes is a probabilistic model that relies on the frequency of events. As 
 
 Contrarily, Logistic Regression is a discriminative model that learns to draw a boundary between classes by assigning continuous weights to each feature. To ensure the model performed optimally on a sparse matrix of 10,000 features, its inverse regularisation strength was tuned to \texttt{C=10.0}, giving it enough mathematical flexibility to learn complex patterns without underfitting. Because Logistic Regression excels at balancing feature weights, it thrived on the TF-IDF representation. The TF-IDF scaling provided a normalised, rich feature space where highly emotional, rare words were mathematically emphasised.
 
-\newpage
+\vspace{0.5cm}
 
 As demonstrated in Table \ref{tab:model_performance}, the Logistic Regression model paired with TF-IDF vectorisation emerged as the champion model. It successfully leveraged the penalised feature weights to achieve the highest scores across all core classification metrics, peaking at an overall accuracy of 0.692.
 
@@ -170,6 +172,8 @@ As demonstrated in Table \ref{tab:model_performance}, the Logistic Regression mo
     \caption{Performance metrics for all model and feature representation combinations.}
     \label{tab:model_performance}
 \end{table}
+
+\newpage
 
 \section{Error Analysis}
 
