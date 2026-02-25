@@ -171,7 +171,42 @@ As demonstrated in Table \ref{tab:model_performance}, the Logistic Regression mo
     \label{tab:model_performance}
 \end{table}
 
-\section{Error Analysis \& Diagnostics (Task 4)}
-% Insert your Confusion Matrix and Feature Importance discussion here.
+\section{Error Analysis}
+
+\quad While the Logistic Regression (TF-IDF) model achieved the highest overall accuracy, analysing its misclassifications provides critical insight into the limitations of statistical text processing. Figure \ref{fig:confusion_matrix} displays the confusion matrix, revealing that the model is highly effective at identifying "Neutral" text (995 correct predictions). However, its primary failure mode is being overly conservative; it frequently misclassifies "Positive" and "Negative" tweets as "Neutral" (275 and 288 errors, respectively) because it struggles to confidently detect sentiment without explicit emotional keywords.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{confusion_matrix.png}
+    \caption{Confusion Matrix for Logistic Regression (TF-IDF, C=10.0)}
+    \label{fig:confusion_matrix}
+\end{figure}
+
+\noindent To understand these boundaries, a qualitative error analysis was conducted on specific misclassified tweets (Table \ref{tab:misclassifications}):
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|p{0.50\textwidth}|c|c|}
+        \hline
+        \textbf{Raw Tweet (Misclassified Examples)} & \textbf{True} & \textbf{Predicted} \\ \hline
+        The underwire in my bra is sticking out and poking me in the armpit & Negative & Neutral \\ \hline
+        I want to see David cook!! & Positive & Neutral \\ \hline
+        .. and you`re on twitter! Did the tavern bore you that much? & Neutral & Negative \\ \hline
+        was so excited to eat the wartermelon i bought the other day and it was terrible and not sweet & Neutral & Negative \\ \hline
+    \end{tabular}
+    \caption{Selected examples demonstrating classic NLP failure modes.}
+    \label{tab:misclassifications}
+\end{table}
+
+\noindent\textbf{1. Implicit Sentiment \& Context (False Neutrals):} Statistical models rely heavily on explicit emotional vocabulary. In the first example, a "poking underwire" is frustrating, but lacking mathematically strong negative words like "hate" or "bad", the model defaults to "Neutral". Similarly, in the second example, the model fails to recognise the positive excitement conveyed by the slang "cook", interpreting the text literally rather than capturing the user's enthusiasm.
+
+\newpage
+
+\noindent\textbf{2. Sarcasm:} The third example uses the word "bore", which carries a strong negative weight in the training data. However, the conversational, slightly sarcastic context is entirely "Neutral". The model processes words in isolation and easily falls victim to these contextual traps.
+
+\vspace{0.5cm}
+
+\noindent\textbf{3. Flawed Dataset Labels:} The final example highlights a common issue when datasets are labelled automatically. The user clearly states that the watermelon was "terrible" and "not sweet", yet the dataset's True Label is "Neutral". The model correctly predicted "Negative", which shows that some of the model's "errors" are actually just mistakes in the dataset itself.
 
 \end{document}
