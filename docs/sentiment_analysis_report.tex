@@ -1,0 +1,71 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- Font and Language Setup (Requires XeLaTeX compiler) ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{carlito}
+\renewcommand{\familydefault}{\sfdefault}
+
+% --- Packages ---
+\usepackage{geometry}
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm} % Standard academic margins
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+% --- Python Code Formatting Setup ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% --- Document Info ---
+\title{\textbf{Sentiment Analysis Classification}\\ \large End-to-End Machine Learning Pipeline Evaluation}
+\author{Student ID: 3539054}
+\date{February 26, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Executive Summary}
+% Write your summary here.
+
+\section{Data Preprocessing (Task 1)}
+% Explain your cleaning logic and spaCy negation handling.
+
+\section{Feature Representation (Task 2)}
+% Discuss BoW vs TF-IDF.
+
+\section{Model Training \& Evaluation (Task 3)}
+% Discuss Hyperparameter tuning (C=10.0) and Naive Bayes vs Log Reg.
+
+\section{Error Analysis \& Diagnostics (Task 4)}
+% Insert your Confusion Matrix and Feature Importance discussion here.
+
+\section{Conclusion}
+% Final reflections.
+
+\end{document}
