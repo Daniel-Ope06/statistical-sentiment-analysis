@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from transformers import Trainer
 from sklearn.preprocessing import LabelEncoder  # type: ignore
 
 from src2.preprocessing import preprocess_sentiment
@@ -11,7 +12,8 @@ from src2.model_training import (
     train_bilstm,
     train_distilbert,
     evaluate_predictions,
-    get_misclassified_examples
+    get_misclassified_examples,
+    SentimentDataset
 )
 
 
@@ -83,7 +85,7 @@ def main():
     # Combination 1: BiLSTM + Word-Level
     bilstm_model, bilstm_history, bilstm_val_metrics, _ = train_bilstm(
         X_train_bilstm, y_train, X_val_bilstm, y_val,
-        vocab_size=VOCAB_LIMIT, max_len=MAX_LEN, num_classes=NUM_CLASSES
+        vocab_size=VOCAB_LIMIT, num_classes=NUM_CLASSES
     )
 
     # Combination 2: DistilBERT + Subword
@@ -100,8 +102,11 @@ def main():
     bilstm_test_metrics = evaluate_predictions(y_test, bilstm_test_preds)
 
     # Predict and evaluate DistilBERT on strictly unseen test data
-    bert_test_output = distilbert_model.predict(dict(test_encodings))
-    bert_test_preds = np.argmax(bert_test_output.logits, axis=1)
+    test_dataset = SentimentDataset(test_encodings, y_test)
+    inference_trainer = Trainer(model=distilbert_model)
+
+    bert_test_output = inference_trainer.predict(test_dataset)
+    bert_test_preds = np.argmax(bert_test_output.predictions, axis=1)
     bert_test_metrics = evaluate_predictions(y_test, bert_test_preds)
 
     # Aggregate metrics into a DataFrame for clean reporting

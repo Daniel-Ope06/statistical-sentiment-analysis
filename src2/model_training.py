@@ -1,11 +1,11 @@
+import torch
 import numpy as np
 import pandas as pd
-import tensorflow as tf  # type: ignore
 from tensorflow.keras.models import Sequential  # type: ignore
 from tensorflow.keras.layers import (  # type: ignore
     Embedding, Bidirectional, LSTM, Dense, Dropout)
 from tensorflow.keras.callbacks import EarlyStopping  # type: ignore
-from transformers import TFDistilBertForSequenceClassification  # type: ignore
+from transformers import DistilBertForSequenceClassification, Trainer, TrainingArguments  # noqa: E501
 from sklearn.metrics import (  # type: ignore
     accuracy_score, precision_score, recall_score, f1_score)
 
@@ -43,7 +43,7 @@ def get_misclassified_examples(
     return errors_df.head(num_examples)
 
 
-def train_bilstm(X_train, y_train, X_val, y_val, vocab_size, max_len, num_classes=3):  # noqa: E501
+def train_bilstm(X_train, y_train, X_val, y_val, vocab_size, num_classes=3):
     """
     Builds and trains a Bidirectional LSTM with a trainable embedding layer.
     Applies Dropout and Early Stopping for regularization.
@@ -57,7 +57,7 @@ def train_bilstm(X_train, y_train, X_val, y_val, vocab_size, max_len, num_classe
     print("\n--- Training BiLSTM ---")
 
     model = Sequential([
-        Embedding(input_dim=vocab_size, output_dim=128, input_length=max_len),
+        Embedding(input_dim=vocab_size, output_dim=128),
         Bidirectional(LSTM(64, return_sequences=False)),
         Dropout(0.5),
         Dense(num_classes, activation='softmax')
@@ -90,6 +90,32 @@ def train_bilstm(X_train, y_train, X_val, y_val, vocab_size, max_len, num_classe
     return model, history, metrics, val_predictions
 
 
+# PyTorch requires a Dataset object to handle batching memory efficiently
+class SentimentDataset(torch.utils.data.Dataset):
+    def __init__(self, encodings, labels):
+        self.encodings = encodings
+        self.labels = labels
+
+    def __getitem__(self, idx):
+        item = {key: val[idx].clone().detach()
+                for key, val in self.encodings.items()}
+        item['labels'] = torch.tensor(self.labels[idx], dtype=torch.long)
+        return item
+
+    def __len__(self):
+        return len(self.labels)
+
+
+class KerasMockHistory:
+    def __init__(self, logs):
+        self.history = {
+            'loss': [log_entry['loss'] for log_entry in logs if 'loss' in log_entry],  # noqa: E501
+            'val_loss': [log_entry['eval_loss'] for log_entry in logs if 'eval_loss' in log_entry],  # noqa: E501
+            'accuracy': [log_entry['eval_accuracy'] for log_entry in logs if 'eval_accuracy' in log_entry],  # noqa: E501
+            'val_accuracy': [log_entry['eval_accuracy'] for log_entry in logs if 'eval_accuracy' in log_entry]  # noqa: E501
+        }
+
+
 def train_distilbert(train_encodings, y_train, val_encodings, y_val, num_classes=3):  # noqa: E501
     """
     Loads and fine-tunes a pretrained DistilBERT sequence classifier.
@@ -100,32 +126,47 @@ def train_distilbert(train_encodings, y_train, val_encodings, y_val, num_classes
     """
     print("\n--- Training DistilBERT ---")
 
-    model = TFDistilBertForSequenceClassification.from_pretrained(
+    # Convert data into PyTorch Datasets
+    train_dataset = SentimentDataset(train_encodings, y_train)
+    val_dataset = SentimentDataset(val_encodings, y_val)
+
+    model = DistilBertForSequenceClassification.from_pretrained(
         'distilbert-base-uncased',
         num_labels=num_classes
     )
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5)
-    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-    model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
-
-    early_stop = EarlyStopping(
-        monitor='val_loss', patience=2, restore_best_weights=True)
-
-    history = model.fit(
-        dict(train_encodings), y_train,
-        validation_data=(dict(val_encodings), y_val),
-        epochs=4,
-        batch_size=16,
-        callbacks=[early_stop]
+    training_args = TrainingArguments(
+        output_dir='./results',
+        num_train_epochs=3,
+        per_device_train_batch_size=16,
+        per_device_eval_batch_size=16,
+        learning_rate=3e-5,
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True
     )
+
+    # How trainer calculates accuracy during training
+    def compute_metrics(pred):
+        labels = pred.label_ids
+        preds = np.argmax(pred.predictions, axis=1)
+        return {'accuracy': accuracy_score(labels, preds)}
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        compute_metrics=compute_metrics
+    )
+
+    trainer.train()
 
     # Predict and Evaluate
     print("\nEvaluating DistilBERT on Validation Set...")
-    val_output = model.predict(dict(val_encodings))
-    # Extract logits and convert to class labels
-    val_predictions = np.argmax(val_output.logits, axis=1)
+    val_raw_output = trainer.predict(val_dataset)
+    val_predictions = np.argmax(val_raw_output.predictions, axis=1)
     metrics = evaluate_predictions(y_val, val_predictions)
+    history = KerasMockHistory(trainer.state.log_history)
 
     return model, history, metrics, val_predictions
