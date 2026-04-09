@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf  # type: ignore
 from tensorflow.keras.models import Sequential  # type: ignore
 from tensorflow.keras.layers import (  # type: ignore
     Embedding, Bidirectional, LSTM, Dense, Dropout)
 from tensorflow.keras.callbacks import EarlyStopping  # type: ignore
+from transformers import TFDistilBertForSequenceClassification  # type: ignore
 from sklearn.metrics import (  # type: ignore
     accuracy_score, precision_score, recall_score, f1_score)
 
@@ -83,6 +85,47 @@ def train_bilstm(X_train, y_train, X_val, y_val, vocab_size, max_len, num_classe
     val_probs = model.predict(X_val)
     # Convert probabilities to class labels
     val_predictions = np.argmax(val_probs, axis=1)
+    metrics = evaluate_predictions(y_val, val_predictions)
+
+    return model, history, metrics, val_predictions
+
+
+def train_distilbert(train_encodings, y_train, val_encodings, y_val, num_classes=3):  # noqa: E501
+    """
+    Loads and fine-tunes a pretrained DistilBERT sequence classifier.
+    Requires a very low learning rate to prevent catastrophic forgetting.
+
+    Args:
+        num_classes (int): The number of output sentiment categories.
+    """
+    print("\n--- Training DistilBERT ---")
+
+    model = TFDistilBertForSequenceClassification.from_pretrained(
+        'distilbert-base-uncased',
+        num_labels=num_classes
+    )
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate=3e-5)
+    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+
+    model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+
+    early_stop = EarlyStopping(
+        monitor='val_loss', patience=2, restore_best_weights=True)
+
+    history = model.fit(
+        dict(train_encodings), y_train,
+        validation_data=(dict(val_encodings), y_val),
+        epochs=4,
+        batch_size=16,
+        callbacks=[early_stop]
+    )
+
+    # Predict and Evaluate
+    print("\nEvaluating DistilBERT on Validation Set...")
+    val_output = model.predict(dict(val_encodings))
+    # Extract logits and convert to class labels
+    val_predictions = np.argmax(val_output.logits, axis=1)
     metrics = evaluate_predictions(y_val, val_predictions)
 
     return model, history, metrics, val_predictions
