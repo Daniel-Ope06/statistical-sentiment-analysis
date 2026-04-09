@@ -48,7 +48,7 @@ def extract_bilstm_features(train_texts, val_texts, test_texts, max_vocab=20000,
 def extract_distilbert_features(train_texts, val_texts, test_texts, max_len=50):  # noqa: E501
     """
     Uses HuggingFace's pretrained WordPiece tokenizer.
-    Outputs input_ids and attention_masks required by Transformer architectures.
+    Outputs PyTorch tensors ('pt') for the Transformer architecture.
 
     Args:
         train_texts (list or pd.Series): Raw text strings for training.
@@ -71,13 +71,13 @@ def extract_distilbert_features(train_texts, val_texts, test_texts, max_len=50):
         # Convert pandas series to list if necessary
         text_list = texts.tolist() if hasattr(texts, 'tolist') else texts
 
-        # Tokenize returning TensorFlow tensors ('tf')
+        # Tokenize returning PyTorch tensors ('pt')
         return bert_tokenizer(
             text_list,
             padding='max_length',
             truncation=True,
             max_length=max_len,
-            return_tensors='tf'
+            return_tensors='pt'
         )
 
     train_encodings = tokenize_for_bert(train_texts)
